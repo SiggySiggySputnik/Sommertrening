@@ -24,43 +24,119 @@
   @keyframes slideUp{ 0%{transform:translateY(8px);opacity:0} 100%{transform:translateY(0);opacity:1} }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .spin{ animation:spin .8s linear infinite; }
+  #fallback{ display:none; padding:40px 24px; text-align:center; color:var(--dim); }
   @media (prefers-reduced-motion: reduce){ *{ animation:none!important; transition:none!important; } }
 </style>
 </head>
 <body>
 <div id="root"></div>
+<div id="fallback">
+  <div style="font-size:40px;margin-bottom:12px">🏀</div>
+  <p style="max-width:300px;margin:0 auto;line-height:1.5">
+    Appen klarte ikke å laste. Sjekk at du har nett, og last siden på nytt.
+  </p>
+</div>
+
+<script>
+  // Vis fallback hvis bibliotekene ikke lastet innen 8 sek
+  window.__loaded = false;
+  setTimeout(function(){
+    if(!window.__loaded && !window.React){
+      document.getElementById("fallback").style.display = "block";
+    }
+  }, 8000);
+</script>
 
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script type="text/babel" src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo, useRef } = React;
+<script>
+const {
+  useState,
+  useEffect,
+  useMemo,
+  useRef
+} = React;
 
 /* ===== KONFIG ===== */
 const SUPABASE_URL = "https://twcccgddjsuadzylexqi.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yaPwH31F0P6AJMcF_18lgQ_eykdot5C";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const WEEKS = 8;
-const EXERCISES = [
-  { id:"lop",     icon:"🏃", name:"Løpeøkter",     unit:"økter", logLabel:"Hvor mange løpeøkter la du inn?", normal:2,  ekstra:4,   hits:false },
-  { id:"drible",  icon:"🏀", name:"Dribledrill",   unit:"økter", logLabel:"Hvor mange dribleøkter?",         normal:3,  ekstra:6,   hits:false },
-  { id:"spenst",  icon:"🦘", name:"Spensthopp",    unit:"sett",  logLabel:"Hvor mange sett?",                normal:6,  ekstra:10,  hits:false },
-  { id:"pushup",  icon:"💪", name:"Push-ups",      unit:"sett",  logLabel:"Hvor mange sett?",                normal:6,  ekstra:12,  hits:false },
-  { id:"straffe", icon:"🎯", name:"Straffeskudd",  unit:"skudd", logLabel:"Hvor mange straffeskudd?",        normal:80, ekstra:160, hits:true },
-  { id:"trepoeng",icon:"🎯", name:"3-poengsskudd", unit:"skudd", logLabel:"Hvor mange 3-poengsskudd?",       normal:60, ekstra:120, hits:true },
-];
+const EXERCISES = [{
+  id: "lop",
+  icon: "🏃",
+  name: "Løpeøkter",
+  unit: "økter",
+  logLabel: "Hvor mange løpeøkter la du inn?",
+  normal: 2,
+  ekstra: 4,
+  hits: false
+}, {
+  id: "drible",
+  icon: "🏀",
+  name: "Dribledrill",
+  unit: "økter",
+  logLabel: "Hvor mange dribleøkter?",
+  normal: 3,
+  ekstra: 6,
+  hits: false
+}, {
+  id: "spenst",
+  icon: "🦘",
+  name: "Spensthopp",
+  unit: "sett",
+  logLabel: "Hvor mange sett?",
+  normal: 6,
+  ekstra: 10,
+  hits: false
+}, {
+  id: "pushup",
+  icon: "💪",
+  name: "Push-ups",
+  unit: "sett",
+  logLabel: "Hvor mange sett?",
+  normal: 6,
+  ekstra: 12,
+  hits: false
+}, {
+  id: "straffe",
+  icon: "🎯",
+  name: "Straffeskudd",
+  unit: "skudd",
+  logLabel: "Hvor mange straffeskudd?",
+  normal: 80,
+  ekstra: 160,
+  hits: true
+}, {
+  id: "trepoeng",
+  icon: "🎯",
+  name: "3-poengsskudd",
+  unit: "skudd",
+  logLabel: "Hvor mange 3-poengsskudd?",
+  normal: 60,
+  ekstra: 120,
+  hits: true
+}];
 const exById = id => EXERCISES.find(e => e.id === id);
 
 /* Treff lagres lokalt (privat). Nøkkel per spiller. */
 const hitsKey = pid => `aliens_hits_${pid}`;
-function loadHits(pid){ try{ return JSON.parse(localStorage.getItem(hitsKey(pid))) || {}; }catch{ return {}; } }
-function saveHits(pid, data){ try{ localStorage.setItem(hitsKey(pid), JSON.stringify(data)); }catch{} }
+function loadHits(pid) {
+  try {
+    return JSON.parse(localStorage.getItem(hitsKey(pid))) || {};
+  } catch {
+    return {};
+  }
+}
+function saveHits(pid, data) {
+  try {
+    localStorage.setItem(hitsKey(pid), JSON.stringify(data));
+  } catch {}
+}
 const rememberKey = "aliens_last_player";
-
-function App(){
+function App() {
   const [screen, setScreen] = useState("loading"); // loading|pick|enroll|dash|error
   const [players, setPlayers] = useState([]);
   const [player, setPlayer] = useState(null);
@@ -70,50 +146,80 @@ function App(){
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => { loadPlayers(); }, []);
-
-  function flash(msg, type="ok"){ setToast({msg,type}); setTimeout(()=>setToast(null), 2600); }
-
-  async function loadPlayers(){
-    const { data, error } = await sb.from("players").select("*").order("full_name");
-    if(error){ setScreen("error"); return; }
+  useEffect(() => {
+    loadPlayers();
+  }, []);
+  function flash(msg, type = "ok") {
+    setToast({
+      msg,
+      type
+    });
+    setTimeout(() => setToast(null), 2600);
+  }
+  async function loadPlayers() {
+    const {
+      data,
+      error
+    } = await sb.from("players").select("*").order("full_name");
+    if (error) {
+      setScreen("error");
+      return;
+    }
     setPlayers(data);
     // husk forrige spiller på denne enheten
     const lastId = localStorage.getItem(rememberKey);
-    if(lastId){
+    if (lastId) {
       const p = data.find(x => x.id === lastId);
-      if(p && p.enrolled){ openPlayer(p); return; }
+      if (p && p.enrolled) {
+        openPlayer(p);
+        return;
+      }
     }
     setScreen("pick");
   }
-
-  async function openPlayer(p){
+  async function openPlayer(p) {
     setBusy(true);
-    const { data, error } = await sb.from("entries").select("*").eq("player_id", p.id);
+    const {
+      data,
+      error
+    } = await sb.from("entries").select("*").eq("player_id", p.id);
     setBusy(false);
-    if(error){ flash("Kunne ikke hente data, prøv igjen","err"); return; }
+    if (error) {
+      flash("Kunne ikke hente data, prøv igjen", "err");
+      return;
+    }
     setPlayer(p);
     setEntries(data || []);
     setHits(loadHits(p.id));
     localStorage.setItem(rememberKey, p.id);
     setScreen("dash");
   }
-
-  function choosePlayer(p){
-    if(p.enrolled){ openPlayer(p); }
-    else { setPlayer(p); setScreen("enroll"); }
+  function choosePlayer(p) {
+    if (p.enrolled) {
+      openPlayer(p);
+    } else {
+      setPlayer(p);
+      setScreen("enroll");
+    }
   }
-
-  async function enroll(){
+  async function enroll() {
     setBusy(true);
-    const { error } = await sb.from("players")
-      .update({ enrolled:true, enrolled_at:new Date().toISOString() })
-      .eq("id", player.id);
+    const {
+      error
+    } = await sb.from("players").update({
+      enrolled: true,
+      enrolled_at: new Date().toISOString()
+    }).eq("id", player.id);
     setBusy(false);
-    if(error){ flash("Noe gikk galt, prøv igjen","err"); return; }
-    const updated = { ...player, enrolled:true };
-    setPlayers(ps => ps.map(x => x.id===player.id ? updated : x));
+    if (error) {
+      flash("Noe gikk galt, prøv igjen", "err");
+      return;
+    }
+    const updated = {
+      ...player,
+      enrolled: true
+    };
+    setPlayers(ps => ps.map(x => x.id === player.id ? updated : x));
     setPlayer(updated);
     setEntries([]);
     setHits(loadHits(player.id));
@@ -121,285 +227,699 @@ function App(){
     setScreen("dash");
     flash("Du er påmeldt! 🏀");
   }
-
-  async function logExercise(exId, count, hitCount){
+  async function logExercise(exId, count, hitCount) {
     const ex = exById(exId);
     setBusy(true);
-    const row = { player_id:player.id, team_id:player.team_id, week, exercise:exId, count };
-    const { data, error } = await sb.from("entries").insert(row).select().single();
+    const row = {
+      player_id: player.id,
+      team_id: player.team_id,
+      week,
+      exercise: exId,
+      count
+    };
+    const {
+      data,
+      error
+    } = await sb.from("entries").insert(row).select().single();
     setBusy(false);
-    if(error){ flash("Lagring feilet – sjekk nett og prøv igjen","err"); return; }
+    if (error) {
+      flash("Lagring feilet – sjekk nett og prøv igjen", "err");
+      return;
+    }
     setEntries(es => [...es, data]);
     // treff lokalt
-    if(ex.hits && hitCount != null){
-      const next = { ...hits };
+    if (ex.hits && hitCount != null) {
+      const next = {
+        ...hits
+      };
       const k = `${week}_${exId}`;
-      next[k] = (next[k]||0) + hitCount;
+      next[k] = (next[k] || 0) + hitCount;
       next[`entry_${data.id}`] = hitCount; // for angring
-      setHits(next); saveHits(player.id, next);
+      setHits(next);
+      saveHits(player.id, next);
     }
     flash(`Lagret: +${count} ${ex.unit} ✓`);
   }
-
-  async function undoLast(){
-    if(!entries.length) return;
-    const last = entries[entries.length-1];
+  async function undoLast() {
+    if (!entries.length) return;
+    const last = entries[entries.length - 1];
     setBusy(true);
-    const { error } = await sb.from("entries").delete().eq("id", last.id);
+    const {
+      error
+    } = await sb.from("entries").delete().eq("id", last.id);
     setBusy(false);
-    if(error){ flash("Kunne ikke angre, prøv igjen","err"); return; }
-    setEntries(es => es.slice(0,-1));
+    if (error) {
+      flash("Kunne ikke angre, prøv igjen", "err");
+      return;
+    }
+    setEntries(es => es.slice(0, -1));
     const ex = exById(last.exercise);
-    if(ex.hits){
-      const next = { ...hits };
+    if (ex.hits) {
+      const next = {
+        ...hits
+      };
       const undoHits = next[`entry_${last.id}`] || 0;
       const k = `${last.week}_${last.exercise}`;
-      next[k] = Math.max(0, (next[k]||0) - undoHits);
+      next[k] = Math.max(0, (next[k] || 0) - undoHits);
       delete next[`entry_${last.id}`];
-      setHits(next); saveHits(player.id, next);
+      setHits(next);
+      saveHits(player.id, next);
     }
-    flash("Siste logg angret","warn");
+    flash("Siste logg angret", "warn");
   }
 
   // sum for valgt uke
   const weekTotals = useMemo(() => {
-    const t = {}; EXERCISES.forEach(e => t[e.id]={count:0});
-    entries.filter(e => e.week===week).forEach(e => { t[e.exercise].count += e.count; });
+    const t = {};
+    EXERCISES.forEach(e => t[e.id] = {
+      count: 0
+    });
+    entries.filter(e => e.week === week).forEach(e => {
+      t[e.exercise].count += e.count;
+    });
     return t;
   }, [entries, week]);
-
-  if(screen==="loading") return <Splash text="Laster…" spin />;
-  if(screen==="error") return <Splash text="Kunne ikke koble til. Sjekk nett og last siden på nytt." />;
-
-  if(screen==="pick"){
+  if (screen === "loading") return /*#__PURE__*/React.createElement(Splash, {
+    text: "Laster\u2026",
+    spin: true
+  });
+  if (screen === "error") return /*#__PURE__*/React.createElement(Splash, {
+    text: "Kunne ikke koble til. Sjekk nett og last siden p\xE5 nytt."
+  });
+  if (screen === "pick") {
     const filtered = players.filter(p => p.full_name.toLowerCase().includes(search.toLowerCase()));
-    return (
-      <div style={{animation:"pop .3s ease"}}>
-        <Header />
-        <p style={S.lead}>Velg navnet ditt for å begynne</p>
-        <input style={S.input} placeholder="Søk etter navnet ditt…" value={search}
-          onChange={e=>setSearch(e.target.value)} autoFocus />
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:14}}>
-          {filtered.map(p => (
-            <button key={p.id} onClick={()=>choosePlayer(p)} style={S.playerRow(p.enrolled)}>
-              <span>{p.full_name}</span>
-              {p.enrolled ? <span style={S.badgeOn}>påmeldt ✓</span> : <span style={S.badgeOff}>velg →</span>}
-            </button>
-          ))}
-          {!filtered.length && <p style={{color:"var(--dim)",textAlign:"center",padding:20}}>Fant ingen med det navnet.</p>}
-        </div>
-        <Toast toast={toast} />
-      </div>
-    );
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        animation: "pop .3s ease"
+      }
+    }, /*#__PURE__*/React.createElement(Header, null), /*#__PURE__*/React.createElement("p", {
+      style: S.lead
+    }, "Velg navnet ditt for \xE5 begynne"), /*#__PURE__*/React.createElement("input", {
+      style: S.input,
+      placeholder: "S\xF8k etter navnet ditt\u2026",
+      value: search,
+      onChange: e => setSearch(e.target.value),
+      autoFocus: true
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        marginTop: 14
+      }
+    }, filtered.map(p => /*#__PURE__*/React.createElement("button", {
+      key: p.id,
+      onClick: () => choosePlayer(p),
+      style: S.playerRow(p.enrolled)
+    }, /*#__PURE__*/React.createElement("span", null, p.full_name), p.enrolled ? /*#__PURE__*/React.createElement("span", {
+      style: S.badgeOn
+    }, "p\xE5meldt \u2713") : /*#__PURE__*/React.createElement("span", {
+      style: S.badgeOff
+    }, "velg \u2192"))), !filtered.length && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: "var(--dim)",
+        textAlign: "center",
+        padding: 20
+      }
+    }, "Fant ingen med det navnet.")), /*#__PURE__*/React.createElement(Toast, {
+      toast: toast
+    }));
   }
-
-  if(screen==="enroll"){
-    return (
-      <div style={{animation:"pop .3s ease"}}>
-        <button style={S.back} onClick={()=>setScreen("pick")}>← Tilbake</button>
-        <div style={{textAlign:"center",padding:"24px 0 6px"}}>
-          <div style={{fontSize:40}}>👋</div>
-          <h1 style={S.h1}>Hei, {player.full_name.split(" ")[0]}!</h1>
-          <p style={S.lead}>Klar for en sterk basket-sommer?</p>
-        </div>
-        <div style={S.card}>
-          <p style={{lineHeight:1.6}}>Dette er et <b>frivillig</b> program for å holde formen og bli bedre gjennom sommeren. Du logger treningen etter hver økt og ser fremgangen din uke for uke.</p>
-          <p style={{lineHeight:1.6,marginTop:12,fontSize:14,color:"var(--dim)"}}>Hver øvelse har et <span style={{color:"var(--green)"}}>Normal-mål</span> og et <span style={{color:"var(--gold)"}}>Ekstra-mål</span>. Sikt mot det som passer deg den uka – alt teller!</p>
-        </div>
-        <button style={S.cta(busy)} disabled={busy} onClick={enroll}>{busy ? "Melder på…" : "Meld meg på 🏀"}</button>
-        <Toast toast={toast} />
-      </div>
-    );
+  if (screen === "enroll") {
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        animation: "pop .3s ease"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: S.back,
+      onClick: () => setScreen("pick")
+    }, "\u2190 Tilbake"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        padding: "24px 0 6px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 40
+      }
+    }, "\uD83D\uDC4B"), /*#__PURE__*/React.createElement("h1", {
+      style: S.h1
+    }, "Hei, ", player.full_name.split(" ")[0], "!"), /*#__PURE__*/React.createElement("p", {
+      style: S.lead
+    }, "Klar for en sterk basket-sommer?")), /*#__PURE__*/React.createElement("div", {
+      style: S.card
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        lineHeight: 1.6
+      }
+    }, "Dette er et ", /*#__PURE__*/React.createElement("b", null, "frivillig"), " program for \xE5 holde formen og bli bedre gjennom sommeren. Du logger treningen etter hver \xF8kt og ser fremgangen din uke for uke."), /*#__PURE__*/React.createElement("p", {
+      style: {
+        lineHeight: 1.6,
+        marginTop: 12,
+        fontSize: 14,
+        color: "var(--dim)"
+      }
+    }, "Hver \xF8velse har et ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--green)"
+      }
+    }, "Normal-m\xE5l"), " og et ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--gold)"
+      }
+    }, "Ekstra-m\xE5l"), ". Sikt mot det som passer deg den uka \u2013 alt teller!")), /*#__PURE__*/React.createElement("button", {
+      style: S.cta(busy),
+      disabled: busy,
+      onClick: enroll
+    }, busy ? "Melder på…" : "Meld meg på 🏀"), /*#__PURE__*/React.createElement(Toast, {
+      toast: toast
+    }));
   }
 
   // dashboard
-  return (
-    <div style={{animation:"pop .3s ease"}}>
-      <div style={S.topbar}>
-        <button style={S.back} onClick={()=>{ setScreen("pick"); setSearch(""); localStorage.removeItem(rememberKey); }}>← Bytt spiller</button>
-        <span style={{fontWeight:700,fontSize:14}}>{player.full_name.split(" ")[0]}</span>
-      </div>
-
-      <div style={S.weekRow}>
-        {Array.from({length:WEEKS},(_,i)=>i+1).map(w => (
-          <button key={w} onClick={()=>setWeek(w)} style={S.weekBtn(w===week)}>U{w}</button>
-        ))}
-      </div>
-
-      <h2 style={{fontSize:22,margin:"4px 0 2px"}}>Uke {week}</h2>
-      <p style={{color:"var(--dim)",fontSize:13,margin:"0 0 16px"}}>Logg det du gjør – det summeres gjennom uka</p>
-
-      <div style={{display:"flex",flexDirection:"column",gap:12}}>
-        {EXERCISES.map(ex => (
-          <ExCard key={ex.id} ex={ex}
-            count={weekTotals[ex.id].count}
-            hitTotal={hits[`${week}_${ex.id}`] || 0}
-            busy={busy}
-            onLog={(c,h)=>logExercise(ex.id,c,h)} />
-        ))}
-      </div>
-
-      {!!entries.length && <button style={S.undo} onClick={undoLast} disabled={busy}>↩ Angre siste logg</button>}
-
-      <Season entries={entries} hits={hits} />
-      <Toast toast={toast} />
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "pop .3s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: S.topbar
+  }, /*#__PURE__*/React.createElement("button", {
+    style: S.back,
+    onClick: () => {
+      setScreen("pick");
+      setSearch("");
+      localStorage.removeItem(rememberKey);
+    }
+  }, "\u2190 Bytt spiller"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14
+    }
+  }, player.full_name.split(" ")[0])), /*#__PURE__*/React.createElement("div", {
+    style: S.weekRow
+  }, Array.from({
+    length: WEEKS
+  }, (_, i) => i + 1).map(w => /*#__PURE__*/React.createElement("button", {
+    key: w,
+    onClick: () => setWeek(w),
+    style: S.weekBtn(w === week)
+  }, "U", w))), /*#__PURE__*/React.createElement("h2", {
+    style: {
+      fontSize: 22,
+      margin: "4px 0 2px"
+    }
+  }, "Uke ", week), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "var(--dim)",
+      fontSize: 13,
+      margin: "0 0 16px"
+    }
+  }, "Logg det du gj\xF8r \u2013 det summeres gjennom uka"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    }
+  }, EXERCISES.map(ex => /*#__PURE__*/React.createElement(ExCard, {
+    key: ex.id,
+    ex: ex,
+    count: weekTotals[ex.id].count,
+    hitTotal: hits[`${week}_${ex.id}`] || 0,
+    busy: busy,
+    onLog: (c, h) => logExercise(ex.id, c, h)
+  }))), !!entries.length && /*#__PURE__*/React.createElement("button", {
+    style: S.undo,
+    onClick: undoLast,
+    disabled: busy
+  }, "\u21A9 Angre siste logg"), /*#__PURE__*/React.createElement(Season, {
+    entries: entries,
+    hits: hits
+  }), /*#__PURE__*/React.createElement(Toast, {
+    toast: toast
+  }));
 }
-
-function ExCard({ ex, count, hitTotal, onLog, busy }){
+function ExCard({
+  ex,
+  count,
+  hitTotal,
+  onLog,
+  busy
+}) {
   const [open, setOpen] = useState(false);
   const [c, setC] = useState("");
   const [h, setH] = useState("");
   const reachedN = count >= ex.normal;
   const reachedE = count >= ex.ekstra;
-  const pct = Math.min(100, count/ex.normal*100);
-  const hitPct = ex.hits && count>0 ? Math.round(hitTotal/count*100) : null;
+  const pct = Math.min(100, count / ex.normal * 100);
+  const hitPct = ex.hits && count > 0 ? Math.round(hitTotal / count * 100) : null;
   const bar = reachedE ? "var(--gold)" : reachedN ? "var(--green)" : "var(--blue)";
-
-  function submit(){
-    const n = parseInt(c,10);
-    if(!n || n<=0) return;
-    const hit = ex.hits ? (parseInt(h,10)||0) : 0;
-    if(ex.hits && hit>n) return;
+  function submit() {
+    const n = parseInt(c, 10);
+    if (!n || n <= 0) return;
+    const hit = ex.hits ? parseInt(h, 10) || 0 : 0;
+    if (ex.hits && hit > n) return;
     onLog(n, ex.hits ? hit : null);
-    setC(""); setH(""); setOpen(false);
+    setC("");
+    setH("");
+    setOpen(false);
   }
-
-  return (
-    <div style={S.exCard(reachedN,reachedE)}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <span style={{fontSize:26}}>{ex.icon}</span>
-        <div style={{flex:1}}>
-          <div style={{fontWeight:700,fontSize:15}}>{ex.name}</div>
-          <div style={{color:"var(--dim)",fontSize:12.5}}>
-            {count} {ex.unit}
-            {reachedE ? " · Ekstra nådd! 🔥" : reachedN ? " · Normal nådd ✓" : ""}
-            {hitPct!==null && <span style={{color:"var(--gold)"}}> · {hitPct}% treff</span>}
-          </div>
-        </div>
-        <button style={S.addBtn} onClick={()=>setOpen(o=>!o)}>{open ? "✕" : "+ Logg"}</button>
-      </div>
-
-      <div style={{marginTop:10}}>
-        <div style={S.barBg}>
-          <div style={{...S.barFill, width:`${pct}%`, background:bar}} />
-          <div style={S.marker(ex.normal/ex.ekstra*100)} />
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-          <span style={{color:"var(--green)",fontSize:11}}>Normal {ex.normal}</span>
-          <span style={{color:"var(--gold)",fontSize:11}}>Ekstra {ex.ekstra}</span>
-        </div>
-      </div>
-
-      {open && (
-        <div style={S.logBox}>
-          <label style={S.lbl}>{ex.logLabel}</label>
-          <input style={S.num} type="number" inputMode="numeric" min="1" value={c}
-            onChange={e=>setC(e.target.value)} autoFocus placeholder="0" />
-          {ex.hits && (
-            <>
-              <label style={S.lbl}>Hvor mange traff du? <span style={{color:"#4A5876"}}>(kun synlig for deg)</span></label>
-              <input style={S.num} type="number" inputMode="numeric" min="0" value={h}
-                onChange={e=>setH(e.target.value)} placeholder="0" />
-              {parseInt(h||0,10) > parseInt(c||0,10) &&
-                <span style={{color:"var(--red)",fontSize:12}}>Treff kan ikke være flere enn skudd</span>}
-            </>
-          )}
-          <button style={S.save(busy)} disabled={busy} onClick={submit}>{busy ? "Lagrer…" : "Lagre"}</button>
-        </div>
-      )}
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: S.exCard(reachedN, reachedE)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 26
+    }
+  }, ex.icon), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, ex.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--dim)",
+      fontSize: 12.5
+    }
+  }, count, " ", ex.unit, reachedE ? " · Ekstra nådd! 🔥" : reachedN ? " · Normal nådd ✓" : "", hitPct !== null && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--gold)"
+    }
+  }, " \xB7 ", hitPct, "% treff"))), /*#__PURE__*/React.createElement("button", {
+    style: S.addBtn,
+    onClick: () => setOpen(o => !o)
+  }, open ? "✕" : "+ Logg")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: S.barBg
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...S.barFill,
+      width: `${pct}%`,
+      background: bar
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: S.marker(ex.normal / ex.ekstra * 100)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--green)",
+      fontSize: 11
+    }
+  }, "Normal ", ex.normal), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--gold)",
+      fontSize: 11
+    }
+  }, "Ekstra ", ex.ekstra))), open && /*#__PURE__*/React.createElement("div", {
+    style: S.logBox
+  }, /*#__PURE__*/React.createElement("label", {
+    style: S.lbl
+  }, ex.logLabel), /*#__PURE__*/React.createElement("input", {
+    style: S.num,
+    type: "number",
+    inputMode: "numeric",
+    min: "1",
+    value: c,
+    onChange: e => setC(e.target.value),
+    autoFocus: true,
+    placeholder: "0"
+  }), ex.hits && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    style: S.lbl
+  }, "Hvor mange traff du? ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#4A5876"
+    }
+  }, "(kun synlig for deg)")), /*#__PURE__*/React.createElement("input", {
+    style: S.num,
+    type: "number",
+    inputMode: "numeric",
+    min: "0",
+    value: h,
+    onChange: e => setH(e.target.value),
+    placeholder: "0"
+  }), parseInt(h || 0, 10) > parseInt(c || 0, 10) && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--red)",
+      fontSize: 12
+    }
+  }, "Treff kan ikke v\xE6re flere enn skudd")), /*#__PURE__*/React.createElement("button", {
+    style: S.save(busy),
+    disabled: busy,
+    onClick: submit
+  }, busy ? "Lagrer…" : "Lagre")));
 }
-
-function Season({ entries, hits }){
+function Season({
+  entries,
+  hits
+}) {
   const totals = useMemo(() => EXERCISES.map(ex => {
-    let count=0; entries.forEach(e => { if(e.exercise===ex.id) count+=e.count; });
-    let hitSum=0;
-    if(ex.hits){ for(let w=1;w<=WEEKS;w++){ hitSum += hits[`${w}_${ex.id}`]||0; } }
-    return { ex, count, hitSum };
+    let count = 0;
+    entries.forEach(e => {
+      if (e.exercise === ex.id) count += e.count;
+    });
+    let hitSum = 0;
+    if (ex.hits) {
+      for (let w = 1; w <= WEEKS; w++) {
+        hitSum += hits[`${w}_${ex.id}`] || 0;
+      }
+    }
+    return {
+      ex,
+      count,
+      hitSum
+    };
   }), [entries, hits]);
-
-  return (
-    <div style={{marginTop:26}}>
-      <h3 style={S.h3}>Hele sommeren</h3>
-      <div style={S.card}>
-        {totals.map(({ex,count,hitSum}) => (
-          <div key={ex.id} style={S.sumRow}>
-            <span>{ex.icon} {ex.name}</span>
-            <span style={{color:"var(--dim)"}}>
-              {count} {ex.unit}
-              {ex.hits && count>0 && <span style={{color:"var(--gold)"}}> · {Math.round(hitSum/count*100)}%</span>}
-            </span>
-          </div>
-        ))}
-      </div>
-      <p style={{color:"#4A5876",fontSize:11.5,textAlign:"center",marginTop:14,lineHeight:1.5}}>
-        Treffprosenten din lagres kun på denne enheten og er privat.<br/>Bytter du telefon, nullstilles den.
-      </p>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 26
+    }
+  }, /*#__PURE__*/React.createElement("h3", {
+    style: S.h3
+  }, "Hele sommeren"), /*#__PURE__*/React.createElement("div", {
+    style: S.card
+  }, totals.map(({
+    ex,
+    count,
+    hitSum
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: ex.id,
+    style: S.sumRow
+  }, /*#__PURE__*/React.createElement("span", null, ex.icon, " ", ex.name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--dim)"
+    }
+  }, count, " ", ex.unit, ex.hits && count > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--gold)"
+    }
+  }, " \xB7 ", Math.round(hitSum / count * 100), "%"))))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#4A5876",
+      fontSize: 11.5,
+      textAlign: "center",
+      marginTop: 14,
+      lineHeight: 1.5
+    }
+  }, "Treffprosenten din lagres kun p\xE5 denne enheten og er privat.", /*#__PURE__*/React.createElement("br", null), "Bytter du telefon, nullstilles den."));
 }
-
-function Header(){
-  return (
-    <div style={{textAlign:"center",paddingTop:38}}>
-      <div style={{fontSize:46}}>🏀</div>
-      <h1 style={{...S.h1, fontFamily:"'Archivo Black',sans-serif", letterSpacing:-0.5}}>SOMMERTRENING</h1>
-      <p style={{color:"var(--accent)",fontWeight:700,fontSize:14,letterSpacing:2,marginTop:-2}}>ASKER ALIENS · 2026</p>
-    </div>
-  );
+function Header() {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      paddingTop: 38
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 46
+    }
+  }, "\uD83C\uDFC0"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      ...S.h1,
+      fontFamily: "'Archivo Black',sans-serif",
+      letterSpacing: -0.5
+    }
+  }, "SOMMERTRENING"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "var(--accent)",
+      fontWeight: 700,
+      fontSize: 14,
+      letterSpacing: 2,
+      marginTop: -2
+    }
+  }, "ASKER ALIENS \xB7 2026"));
 }
-
-function Splash({ text, spin }){
-  return (
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100dvh",textAlign:"center",padding:24}}>
-      <div style={{fontSize:46,marginBottom:16}}>🏀</div>
-      {spin && <div className="spin" style={{width:26,height:26,border:"3px solid var(--line)",borderTopColor:"var(--accent)",borderRadius:"50%",marginBottom:16}} />}
-      <p style={{color:"var(--dim)",maxWidth:300,lineHeight:1.5}}>{text}</p>
-    </div>
-  );
+function Splash({
+  text,
+  spin
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "100dvh",
+      textAlign: "center",
+      padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 46,
+      marginBottom: 16
+    }
+  }, "\uD83C\uDFC0"), spin && /*#__PURE__*/React.createElement("div", {
+    className: "spin",
+    style: {
+      width: 26,
+      height: 26,
+      border: "3px solid var(--line)",
+      borderTopColor: "var(--accent)",
+      borderRadius: "50%",
+      marginBottom: 16
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "var(--dim)",
+      maxWidth: 300,
+      lineHeight: 1.5
+    }
+  }, text));
 }
-
-function Toast({ toast }){
-  if(!toast) return null;
-  const bg = toast.type==="warn" ? "var(--gold)" : toast.type==="err" ? "var(--red)" : "var(--green)";
-  return (
-    <div style={{position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:"50%",transform:"translateX(-50%)",
-      background:bg,color:"#0B1220",fontWeight:700,fontSize:14,padding:"11px 22px",borderRadius:12,
-      boxShadow:"0 8px 24px rgba(0,0,0,.4)",zIndex:100,maxWidth:"90%",animation:"slideUp .25s ease"}}>{toast.msg}</div>
-  );
+function Toast({
+  toast
+}) {
+  if (!toast) return null;
+  const bg = toast.type === "warn" ? "var(--gold)" : toast.type === "err" ? "var(--red)" : "var(--green)";
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      bottom: "calc(24px + env(safe-area-inset-bottom))",
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: bg,
+      color: "#0B1220",
+      fontWeight: 700,
+      fontSize: 14,
+      padding: "11px 22px",
+      borderRadius: 12,
+      boxShadow: "0 8px 24px rgba(0,0,0,.4)",
+      zIndex: 100,
+      maxWidth: "90%",
+      animation: "slideUp .25s ease"
+    }
+  }, toast.msg);
 }
-
 const S = {
-  h1:{ fontSize:27, fontWeight:800, margin:"8px 0 2px" },
-  lead:{ color:"var(--dim)", fontSize:14, margin:"2px 0 0" },
-  h3:{ color:"var(--dim)", fontSize:13, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginBottom:10 },
-  input:{ width:"100%", background:"var(--panel)", border:"1px solid var(--line)", borderRadius:12, color:"var(--text)", fontSize:16, padding:"13px 16px", outline:"none", marginTop:14 },
-  playerRow:on=>({ display:"flex", justifyContent:"space-between", alignItems:"center", background:"var(--panel)", border:`1px solid ${on?"rgba(52,211,153,.34)":"var(--line)"}`, borderRadius:12, padding:"13px 16px", color:"var(--text)", fontSize:15.5, textAlign:"left", width:"100%", fontWeight:500 }),
-  badgeOn:{ color:"var(--green)", fontSize:12.5, fontWeight:700 },
-  badgeOff:{ color:"var(--dim)", fontSize:13 },
-  card:{ background:"var(--panel)", border:"1px solid var(--line)", borderRadius:14, padding:16, marginTop:14 },
-  cta:b=>({ width:"100%", background:b?"#C9531F":"var(--accent)", color:"#fff", border:"none", borderRadius:13, padding:"15px", fontSize:17, fontWeight:800, marginTop:18, opacity:b?.8:1 }),
-  back:{ background:"none", border:"none", color:"var(--dim)", fontSize:14, padding:"14px 0", textAlign:"left" },
-  topbar:{ display:"flex", justifyContent:"space-between", alignItems:"center" },
-  weekRow:{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14, marginTop:4 },
-  weekBtn:a=>({ flex:"1 1 auto", minWidth:38, background:a?"var(--accent)":"var(--panel)", border:`1px solid ${a?"var(--accent)":"var(--line)"}`, borderRadius:9, color:a?"#fff":"var(--dim)", fontWeight:a?800:500, fontSize:13.5, padding:"9px 0" }),
-  exCard:(n,e)=>({ background:e?"rgba(251,191,36,.07)":n?"rgba(52,211,153,.06)":"var(--panel)", border:`1px solid ${e?"rgba(251,191,36,.34)":n?"rgba(52,211,153,.27)":"var(--line)"}`, borderRadius:14, padding:14 }),
-  addBtn:{ background:"var(--panel2)", border:"1px solid var(--line)", color:"var(--text)", borderRadius:9, padding:"8px 13px", fontSize:13.5, fontWeight:700, whiteSpace:"nowrap" },
-  barBg:{ position:"relative", height:8, background:"var(--panel2)", borderRadius:99, overflow:"hidden" },
-  barFill:{ height:"100%", borderRadius:99, transition:"width .35s ease" },
-  marker:l=>({ position:"absolute", top:-2, left:`${l}%`, width:2, height:12, background:"var(--green)", opacity:.85 }),
-  logBox:{ marginTop:12, padding:12, background:"var(--bg)", borderRadius:10, border:"1px solid var(--line)", animation:"slideUp .2s ease" },
-  lbl:{ display:"block", color:"var(--dim)", fontSize:12.5, marginBottom:5, marginTop:6 },
-  num:{ width:"100%", background:"var(--panel)", border:"1px solid var(--line)", borderRadius:9, color:"var(--text)", fontSize:16, padding:"10px 12px", outline:"none" },
-  save:b=>({ width:"100%", background:b?"#27A576":"var(--green)", color:"#0B1220", border:"none", borderRadius:9, padding:"11px", fontSize:15, fontWeight:800, marginTop:10 }),
-  undo:{ width:"100%", background:"none", border:"1px solid var(--line)", color:"var(--dim)", borderRadius:10, padding:"11px", fontSize:13.5, marginTop:14 },
-  sumRow:{ display:"flex", justifyContent:"space-between", padding:"7px 0", fontSize:14, borderBottom:"1px solid rgba(38,51,77,.34)" },
+  h1: {
+    fontSize: 27,
+    fontWeight: 800,
+    margin: "8px 0 2px"
+  },
+  lead: {
+    color: "var(--dim)",
+    fontSize: 14,
+    margin: "2px 0 0"
+  },
+  h3: {
+    color: "var(--dim)",
+    fontSize: 13,
+    fontWeight: 700,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 10
+  },
+  input: {
+    width: "100%",
+    background: "var(--panel)",
+    border: "1px solid var(--line)",
+    borderRadius: 12,
+    color: "var(--text)",
+    fontSize: 16,
+    padding: "13px 16px",
+    outline: "none",
+    marginTop: 14
+  },
+  playerRow: on => ({
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "var(--panel)",
+    border: `1px solid ${on ? "rgba(52,211,153,.34)" : "var(--line)"}`,
+    borderRadius: 12,
+    padding: "13px 16px",
+    color: "var(--text)",
+    fontSize: 15.5,
+    textAlign: "left",
+    width: "100%",
+    fontWeight: 500
+  }),
+  badgeOn: {
+    color: "var(--green)",
+    fontSize: 12.5,
+    fontWeight: 700
+  },
+  badgeOff: {
+    color: "var(--dim)",
+    fontSize: 13
+  },
+  card: {
+    background: "var(--panel)",
+    border: "1px solid var(--line)",
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 14
+  },
+  cta: b => ({
+    width: "100%",
+    background: b ? "#C9531F" : "var(--accent)",
+    color: "#fff",
+    border: "none",
+    borderRadius: 13,
+    padding: "15px",
+    fontSize: 17,
+    fontWeight: 800,
+    marginTop: 18,
+    opacity: b ? .8 : 1
+  }),
+  back: {
+    background: "none",
+    border: "none",
+    color: "var(--dim)",
+    fontSize: 14,
+    padding: "14px 0",
+    textAlign: "left"
+  },
+  topbar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  weekRow: {
+    display: "flex",
+    gap: 6,
+    flexWrap: "wrap",
+    marginBottom: 14,
+    marginTop: 4
+  },
+  weekBtn: a => ({
+    flex: "1 1 auto",
+    minWidth: 38,
+    background: a ? "var(--accent)" : "var(--panel)",
+    border: `1px solid ${a ? "var(--accent)" : "var(--line)"}`,
+    borderRadius: 9,
+    color: a ? "#fff" : "var(--dim)",
+    fontWeight: a ? 800 : 500,
+    fontSize: 13.5,
+    padding: "9px 0"
+  }),
+  exCard: (n, e) => ({
+    background: e ? "rgba(251,191,36,.07)" : n ? "rgba(52,211,153,.06)" : "var(--panel)",
+    border: `1px solid ${e ? "rgba(251,191,36,.34)" : n ? "rgba(52,211,153,.27)" : "var(--line)"}`,
+    borderRadius: 14,
+    padding: 14
+  }),
+  addBtn: {
+    background: "var(--panel2)",
+    border: "1px solid var(--line)",
+    color: "var(--text)",
+    borderRadius: 9,
+    padding: "8px 13px",
+    fontSize: 13.5,
+    fontWeight: 700,
+    whiteSpace: "nowrap"
+  },
+  barBg: {
+    position: "relative",
+    height: 8,
+    background: "var(--panel2)",
+    borderRadius: 99,
+    overflow: "hidden"
+  },
+  barFill: {
+    height: "100%",
+    borderRadius: 99,
+    transition: "width .35s ease"
+  },
+  marker: l => ({
+    position: "absolute",
+    top: -2,
+    left: `${l}%`,
+    width: 2,
+    height: 12,
+    background: "var(--green)",
+    opacity: .85
+  }),
+  logBox: {
+    marginTop: 12,
+    padding: 12,
+    background: "var(--bg)",
+    borderRadius: 10,
+    border: "1px solid var(--line)",
+    animation: "slideUp .2s ease"
+  },
+  lbl: {
+    display: "block",
+    color: "var(--dim)",
+    fontSize: 12.5,
+    marginBottom: 5,
+    marginTop: 6
+  },
+  num: {
+    width: "100%",
+    background: "var(--panel)",
+    border: "1px solid var(--line)",
+    borderRadius: 9,
+    color: "var(--text)",
+    fontSize: 16,
+    padding: "10px 12px",
+    outline: "none"
+  },
+  save: b => ({
+    width: "100%",
+    background: b ? "#27A576" : "var(--green)",
+    color: "#0B1220",
+    border: "none",
+    borderRadius: 9,
+    padding: "11px",
+    fontSize: 15,
+    fontWeight: 800,
+    marginTop: 10
+  }),
+  undo: {
+    width: "100%",
+    background: "none",
+    border: "1px solid var(--line)",
+    color: "var(--dim)",
+    borderRadius: 10,
+    padding: "11px",
+    fontSize: 13.5,
+    marginTop: 14
+  },
+  sumRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "7px 0",
+    fontSize: 14,
+    borderBottom: "1px solid rgba(38,51,77,.34)"
+  }
 };
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
 </body>
 </html>
