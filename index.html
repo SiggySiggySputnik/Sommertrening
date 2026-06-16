@@ -32,31 +32,22 @@
 <div id="root"></div>
 <div id="fallback">
   <div style="font-size:40px;margin-bottom:12px">🏀</div>
-  <p style="max-width:300px;margin:0 auto;line-height:1.5">
-    Appen klarte ikke å laste. Sjekk at du har nett, og last siden på nytt.
-  </p>
+  <p style="max-width:300px;margin:0 auto;line-height:1.5">Appen klarte ikke å laste. Sjekk at du har nett, og last siden på nytt.</p>
 </div>
-
 <script>
-  // Vis fallback hvis bibliotekene ikke lastet innen 8 sek
   window.__loaded = false;
   setTimeout(function(){
-    if(!window.__loaded && !window.React){
-      document.getElementById("fallback").style.display = "block";
-    }
+    if(!window.React){ document.getElementById("fallback").style.display = "block"; }
   }, 8000);
 </script>
-
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
 <script>
 const {
   useState,
   useEffect,
-  useMemo,
-  useRef
+  useMemo
 } = React;
 
 /* ===== KONFIG ===== */
@@ -79,8 +70,8 @@ const EXERCISES = [{
   name: "Dribledrill",
   unit: "økter",
   logLabel: "Hvor mange dribleøkter?",
-  normal: 3,
-  ekstra: 6,
+  normal: 4,
+  ekstra: 10,
   hits: false
 }, {
   id: "spenst",
@@ -107,7 +98,7 @@ const EXERCISES = [{
   unit: "skudd",
   logLabel: "Hvor mange straffeskudd?",
   normal: 80,
-  ekstra: 160,
+  ekstra: 200,
   hits: true
 }, {
   id: "trepoeng",
@@ -116,12 +107,10 @@ const EXERCISES = [{
   unit: "skudd",
   logLabel: "Hvor mange 3-poengsskudd?",
   normal: 60,
-  ekstra: 120,
+  ekstra: 150,
   hits: true
 }];
 const exById = id => EXERCISES.find(e => e.id === id);
-
-/* Treff lagres lokalt (privat). Nøkkel per spiller. */
 const hitsKey = pid => `aliens_hits_${pid}`;
 function loadHits(pid) {
   try {
@@ -137,7 +126,7 @@ function saveHits(pid, data) {
 }
 const rememberKey = "aliens_last_player";
 function App() {
-  const [screen, setScreen] = useState("loading"); // loading|pick|enroll|dash|error
+  const [screen, setScreen] = useState("loading");
   const [players, setPlayers] = useState([]);
   const [player, setPlayer] = useState(null);
   const [entries, setEntries] = useState([]);
@@ -166,7 +155,6 @@ function App() {
       return;
     }
     setPlayers(data);
-    // husk forrige spiller på denne enheten
     const lastId = localStorage.getItem(rememberKey);
     if (lastId) {
       const p = data.find(x => x.id === lastId);
@@ -182,7 +170,7 @@ function App() {
     const {
       data,
       error
-    } = await sb.from("entries").select("*").eq("player_id", p.id);
+    } = await sb.from("entries").select("*").eq("player_id", p.id).order("id");
     setBusy(false);
     if (error) {
       flash("Kunne ikke hente data, prøv igjen", "err");
@@ -247,48 +235,45 @@ function App() {
       return;
     }
     setEntries(es => [...es, data]);
-    // treff lokalt
     if (ex.hits && hitCount != null) {
       const next = {
         ...hits
       };
       const k = `${week}_${exId}`;
       next[k] = (next[k] || 0) + hitCount;
-      next[`entry_${data.id}`] = hitCount; // for angring
+      next[`entry_${data.id}`] = hitCount;
       setHits(next);
       saveHits(player.id, next);
     }
     flash(`Lagret: +${count} ${ex.unit} ✓`);
   }
-  async function undoLast() {
-    if (!entries.length) return;
-    const last = entries[entries.length - 1];
+
+  // Slett én bestemt loggføring
+  async function deleteEntry(entry) {
     setBusy(true);
     const {
       error
-    } = await sb.from("entries").delete().eq("id", last.id);
+    } = await sb.from("entries").delete().eq("id", entry.id);
     setBusy(false);
     if (error) {
-      flash("Kunne ikke angre, prøv igjen", "err");
+      flash("Kunne ikke slette, prøv igjen", "err");
       return;
     }
-    setEntries(es => es.slice(0, -1));
-    const ex = exById(last.exercise);
+    setEntries(es => es.filter(e => e.id !== entry.id));
+    const ex = exById(entry.exercise);
     if (ex.hits) {
       const next = {
         ...hits
       };
-      const undoHits = next[`entry_${last.id}`] || 0;
-      const k = `${last.week}_${last.exercise}`;
+      const undoHits = next[`entry_${entry.id}`] || 0;
+      const k = `${entry.week}_${entry.exercise}`;
       next[k] = Math.max(0, (next[k] || 0) - undoHits);
-      delete next[`entry_${last.id}`];
+      delete next[`entry_${entry.id}`];
       setHits(next);
       saveHits(player.id, next);
     }
-    flash("Siste logg angret", "warn");
+    flash("Loggføring slettet", "warn");
   }
-
-  // sum for valgt uke
   const weekTotals = useMemo(() => {
     const t = {};
     EXERCISES.forEach(e => t[e.id] = {
@@ -299,6 +284,7 @@ function App() {
     });
     return t;
   }, [entries, week]);
+  const weekEntries = useMemo(() => entries.filter(e => e.week === week), [entries, week]);
   if (screen === "loading") return /*#__PURE__*/React.createElement(Splash, {
     text: "Laster\u2026",
     spin: true
@@ -395,8 +381,6 @@ function App() {
       toast: toast
     }));
   }
-
-  // dashboard
   return /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "pop .3s ease"
@@ -447,11 +431,11 @@ function App() {
     hitTotal: hits[`${week}_${ex.id}`] || 0,
     busy: busy,
     onLog: (c, h) => logExercise(ex.id, c, h)
-  }))), !!entries.length && /*#__PURE__*/React.createElement("button", {
-    style: S.undo,
-    onClick: undoLast,
-    disabled: busy
-  }, "\u21A9 Angre siste logg"), /*#__PURE__*/React.createElement(Season, {
+  }))), /*#__PURE__*/React.createElement(WeekEntries, {
+    entries: weekEntries,
+    busy: busy,
+    onDelete: deleteEntry
+  }), /*#__PURE__*/React.createElement(Season, {
     entries: entries,
     hits: hits
   }), /*#__PURE__*/React.createElement(Toast, {
@@ -583,6 +567,50 @@ function ExCard({
     disabled: busy,
     onClick: submit
   }, busy ? "Lagrer…" : "Lagre")));
+}
+function WeekEntries({
+  entries,
+  onDelete,
+  busy
+}) {
+  if (!entries.length) return null;
+  // nyeste først
+  const list = [...entries].reverse();
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 22
+    }
+  }, /*#__PURE__*/React.createElement("h3", {
+    style: S.h3
+  }, "Dine loggf\xF8ringer denne uka"), /*#__PURE__*/React.createElement("div", {
+    style: S.card
+  }, list.map(e => {
+    const ex = exById(e.exercise);
+    return /*#__PURE__*/React.createElement("div", {
+      key: e.id,
+      style: S.entryRow
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14
+      }
+    }, ex.icon, " ", e.count, " ", ex.unit, " ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--dim)"
+      }
+    }, "\xB7 ", ex.name)), /*#__PURE__*/React.createElement("button", {
+      style: S.del,
+      disabled: busy,
+      onClick: () => onDelete(e),
+      title: "Slett"
+    }, "\uD83D\uDDD1\uFE0F"));
+  })), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#4A5876",
+      fontSize: 11.5,
+      marginTop: 8,
+      lineHeight: 1.5
+    }
+  }, "Logget du feil? Slett loggf\xF8ringen og legg den inn p\xE5 nytt."));
 }
 function Season({
   entries,
@@ -901,15 +929,21 @@ const S = {
     fontWeight: 800,
     marginTop: 10
   }),
-  undo: {
-    width: "100%",
+  entryRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "8px 0",
+    fontSize: 14,
+    borderBottom: "1px solid rgba(38,51,77,.34)"
+  },
+  del: {
     background: "none",
-    border: "1px solid var(--line)",
-    color: "var(--dim)",
-    borderRadius: 10,
-    padding: "11px",
-    fontSize: 13.5,
-    marginTop: 14
+    border: "none",
+    fontSize: 16,
+    cursor: "pointer",
+    padding: "2px 6px",
+    opacity: .85
   },
   sumRow: {
     display: "flex",
