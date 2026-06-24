@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8" />
@@ -10,11 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  :root{
-    --bg:#0B1220; --panel:#131C2E; --panel2:#1B2740; --line:#26334D;
-    --text:#EAF0FB; --dim:#8A99B5; --green:#34D399; --gold:#FBBF24;
-    --blue:#5B8DEF; --red:#F87171; --accent:#FF6B35;
-  }
+  :root{ --bg:#0B1220; --panel:#131C2E; --panel2:#1B2740; --line:#26334D; --text:#EAF0FB; --dim:#8A99B5; --green:#34D399; --gold:#FBBF24; --blue:#5B8DEF; --red:#F87171; --accent:#FF6B35; }
   html,body{ background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; }
   body{ min-height:100vh; min-height:100dvh; }
   #root{ max-width:480px; margin:0 auto; padding:0 16px calc(80px + env(safe-area-inset-bottom)); }
@@ -30,27 +26,18 @@
 </head>
 <body>
 <div id="root"></div>
-<div id="fallback">
-  <div style="font-size:40px;margin-bottom:12px">🏀</div>
-  <p style="max-width:300px;margin:0 auto;line-height:1.5">Appen klarte ikke å laste. Sjekk at du har nett, og last siden på nytt.</p>
-</div>
-<script>
-  window.__loaded = false;
-  setTimeout(function(){
-    if(!window.React){ document.getElementById("fallback").style.display = "block"; }
-  }, 8000);
-</script>
+<div id="fallback"><div style="font-size:40px;margin-bottom:12px">🏀</div><p style="max-width:300px;margin:0 auto;line-height:1.5">Appen klarte ikke å laste. Sjekk at du har nett, og last siden på nytt.</p></div>
+<script>setTimeout(function(){ if(!window.React){ document.getElementById("fallback").style.display="block"; } }, 8000);</script>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
+import { jsxDEV as _jsxDEV, Fragment as _Fragment } from "react/jsx-dev-runtime";
 const {
   useState,
   useEffect,
   useMemo
 } = React;
-
-/* ===== KONFIG ===== */
 const SUPABASE_URL = "https://twcccgddjsuadzylexqi.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yaPwH31F0P6AJMcF_18lgQ_eykdot5C";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -109,6 +96,15 @@ const EXERCISES = [{
   normal: 60,
   ekstra: 150,
   hits: true
+}, {
+  id: "diverse",
+  icon: "🏀",
+  name: "Diverse skudd/layup",
+  unit: "skudd",
+  logLabel: "Hvor mange skudd?",
+  normal: 80,
+  ekstra: 200,
+  hits: false
 }];
 const exById = id => EXERCISES.find(e => e.id === id);
 const hitsKey = pid => `aliens_hits_${pid}`;
@@ -247,8 +243,6 @@ function App() {
     }
     flash(`Lagret: +${count} ${ex.unit} ✓`);
   }
-
-  // Slett én bestemt loggføring
   async function deleteEntry(entry) {
     setBusy(true);
     const {
@@ -280,167 +274,196 @@ function App() {
       count: 0
     });
     entries.filter(e => e.week === week).forEach(e => {
-      t[e.exercise].count += e.count;
+      if (t[e.exercise]) t[e.exercise].count += e.count;
     });
     return t;
   }, [entries, week]);
   const weekEntries = useMemo(() => entries.filter(e => e.week === week), [entries, week]);
-  if (screen === "loading") return /*#__PURE__*/React.createElement(Splash, {
-    text: "Laster\u2026",
-    spin: true
-  });
-  if (screen === "error") return /*#__PURE__*/React.createElement(Splash, {
-    text: "Kunne ikke koble til. Sjekk nett og last siden p\xE5 nytt."
-  });
+  if (screen === "loading") return /*#__PURE__*/_jsxDEV(Splash, {
+    spin: true,
+    text: "Laster…"
+  }, void 0, false);
+  if (screen === "error") return /*#__PURE__*/_jsxDEV(Splash, {
+    text: "Kunne ikke koble til. Sjekk nett og last siden på nytt."
+  }, void 0, false);
   if (screen === "pick") {
     const filtered = players.filter(p => p.full_name.toLowerCase().includes(search.toLowerCase()));
-    return /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         animation: "pop .3s ease"
-      }
-    }, /*#__PURE__*/React.createElement(Header, null), /*#__PURE__*/React.createElement("p", {
-      style: S.lead
-    }, "Velg navnet ditt for \xE5 begynne"), /*#__PURE__*/React.createElement("input", {
-      style: S.input,
-      placeholder: "S\xF8k etter navnet ditt\u2026",
-      value: search,
-      onChange: e => setSearch(e.target.value),
-      autoFocus: true
-    }), /*#__PURE__*/React.createElement("div", {
+      },
+      children: [/*#__PURE__*/_jsxDEV(Header, {}, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+        style: S.lead,
+        children: "Velg navnet ditt for å begynne"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+        style: S.input,
+        placeholder: "Søk etter navnet ditt…",
+        value: search,
+        onChange: e => setSearch(e.target.value),
+        autoFocus: true
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          marginTop: 14
+        },
+        children: [filtered.map(p => /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => choosePlayer(p),
+          style: S.playerRow(p.enrolled),
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            children: p.full_name
+          }, void 0, false), p.enrolled ? /*#__PURE__*/_jsxDEV("span", {
+            style: S.badgeOn,
+            children: "påmeldt ✓"
+          }, void 0, false) : /*#__PURE__*/_jsxDEV("span", {
+            style: S.badgeOff,
+            children: "velg →"
+          }, void 0, false)]
+        }, p.id, true)), !filtered.length && /*#__PURE__*/_jsxDEV("p", {
+          style: {
+            color: "var(--dim)",
+            textAlign: "center",
+            padding: 20
+          },
+          children: "Fant ingen med det navnet."
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV(Toast, {
+        toast: toast
+      }, void 0, false)]
+    }, void 0, true);
+  }
+  if (screen === "enroll") {
+    return /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        animation: "pop .3s ease"
+      },
+      children: [/*#__PURE__*/_jsxDEV("button", {
+        style: S.back,
+        onClick: () => setScreen("pick"),
+        children: "← Tilbake"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center",
+          padding: "24px 0 6px"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 40
+          },
+          children: "👋"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("h1", {
+          style: S.h1,
+          children: ["Hei, ", player.full_name.split(" ")[0], "!"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
+          style: S.lead,
+          children: "Klar for en sterk basket-sommer?"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: S.card,
+        children: [/*#__PURE__*/_jsxDEV("p", {
+          style: {
+            lineHeight: 1.6
+          },
+          children: ["Dette er et ", /*#__PURE__*/_jsxDEV("b", {
+            children: "frivillig"
+          }, void 0, false), " program for å holde formen og bli bedre gjennom sommeren. Du logger treningen etter hver økt og ser fremgangen din uke for uke."]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
+          style: {
+            lineHeight: 1.6,
+            marginTop: 12,
+            fontSize: 14,
+            color: "var(--dim)"
+          },
+          children: ["Hver øvelse har et ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: "var(--green)"
+            },
+            children: "Normal-mål"
+          }, void 0, false), " og et ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: "var(--gold)"
+            },
+            children: "Ekstra-mål"
+          }, void 0, false), ". Sikt mot det som passer deg den uka – alt teller!"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+        style: S.cta(busy),
+        disabled: busy,
+        onClick: enroll,
+        children: busy ? "Melder på…" : "Meld meg på 🏀"
+      }, void 0, false), /*#__PURE__*/_jsxDEV(Toast, {
+        toast: toast
+      }, void 0, false)]
+    }, void 0, true);
+  }
+  return /*#__PURE__*/_jsxDEV("div", {
+    style: {
+      animation: "pop .3s ease"
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: S.topbar,
+      children: [/*#__PURE__*/_jsxDEV("button", {
+        style: S.back,
+        onClick: () => {
+          setScreen("pick");
+          setSearch("");
+          localStorage.removeItem(rememberKey);
+        },
+        children: "← Bytt spiller"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontWeight: 700,
+          fontSize: 14
+        },
+        children: player.full_name.split(" ")[0]
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: S.weekRow,
+      children: Array.from({
+        length: WEEKS
+      }, (_, i) => i + 1).map(w => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setWeek(w),
+        style: S.weekBtn(w === week),
+        children: ["U", w]
+      }, w, true))
+    }, void 0, false), /*#__PURE__*/_jsxDEV("h2", {
+      style: {
+        fontSize: 22,
+        margin: "4px 0 2px"
+      },
+      children: ["Uke ", week]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "var(--dim)",
+        fontSize: 13,
+        margin: "0 0 16px"
+      },
+      children: "Logg det du gjør – det summeres gjennom uka"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
         flexDirection: "column",
-        gap: 8,
-        marginTop: 14
-      }
-    }, filtered.map(p => /*#__PURE__*/React.createElement("button", {
-      key: p.id,
-      onClick: () => choosePlayer(p),
-      style: S.playerRow(p.enrolled)
-    }, /*#__PURE__*/React.createElement("span", null, p.full_name), p.enrolled ? /*#__PURE__*/React.createElement("span", {
-      style: S.badgeOn
-    }, "p\xE5meldt \u2713") : /*#__PURE__*/React.createElement("span", {
-      style: S.badgeOff
-    }, "velg \u2192"))), !filtered.length && /*#__PURE__*/React.createElement("p", {
-      style: {
-        color: "var(--dim)",
-        textAlign: "center",
-        padding: 20
-      }
-    }, "Fant ingen med det navnet.")), /*#__PURE__*/React.createElement(Toast, {
+        gap: 12
+      },
+      children: EXERCISES.map(ex => /*#__PURE__*/_jsxDEV(ExCard, {
+        ex: ex,
+        count: weekTotals[ex.id].count,
+        hitTotal: hits[`${week}_${ex.id}`] || 0,
+        busy: busy,
+        onLog: (c, h) => logExercise(ex.id, c, h)
+      }, ex.id, false))
+    }, void 0, false), /*#__PURE__*/_jsxDEV(WeekEntries, {
+      entries: weekEntries,
+      busy: busy,
+      onDelete: deleteEntry
+    }, void 0, false), /*#__PURE__*/_jsxDEV(Season, {
+      entries: entries,
+      hits: hits
+    }, void 0, false), /*#__PURE__*/_jsxDEV(Toast, {
       toast: toast
-    }));
-  }
-  if (screen === "enroll") {
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        animation: "pop .3s ease"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      style: S.back,
-      onClick: () => setScreen("pick")
-    }, "\u2190 Tilbake"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center",
-        padding: "24px 0 6px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 40
-      }
-    }, "\uD83D\uDC4B"), /*#__PURE__*/React.createElement("h1", {
-      style: S.h1
-    }, "Hei, ", player.full_name.split(" ")[0], "!"), /*#__PURE__*/React.createElement("p", {
-      style: S.lead
-    }, "Klar for en sterk basket-sommer?")), /*#__PURE__*/React.createElement("div", {
-      style: S.card
-    }, /*#__PURE__*/React.createElement("p", {
-      style: {
-        lineHeight: 1.6
-      }
-    }, "Dette er et ", /*#__PURE__*/React.createElement("b", null, "frivillig"), " program for \xE5 holde formen og bli bedre gjennom sommeren. Du logger treningen etter hver \xF8kt og ser fremgangen din uke for uke."), /*#__PURE__*/React.createElement("p", {
-      style: {
-        lineHeight: 1.6,
-        marginTop: 12,
-        fontSize: 14,
-        color: "var(--dim)"
-      }
-    }, "Hver \xF8velse har et ", /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--green)"
-      }
-    }, "Normal-m\xE5l"), " og et ", /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--gold)"
-      }
-    }, "Ekstra-m\xE5l"), ". Sikt mot det som passer deg den uka \u2013 alt teller!")), /*#__PURE__*/React.createElement("button", {
-      style: S.cta(busy),
-      disabled: busy,
-      onClick: enroll
-    }, busy ? "Melder på…" : "Meld meg på 🏀"), /*#__PURE__*/React.createElement(Toast, {
-      toast: toast
-    }));
-  }
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "pop .3s ease"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: S.topbar
-  }, /*#__PURE__*/React.createElement("button", {
-    style: S.back,
-    onClick: () => {
-      setScreen("pick");
-      setSearch("");
-      localStorage.removeItem(rememberKey);
-    }
-  }, "\u2190 Bytt spiller"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14
-    }
-  }, player.full_name.split(" ")[0])), /*#__PURE__*/React.createElement("div", {
-    style: S.weekRow
-  }, Array.from({
-    length: WEEKS
-  }, (_, i) => i + 1).map(w => /*#__PURE__*/React.createElement("button", {
-    key: w,
-    onClick: () => setWeek(w),
-    style: S.weekBtn(w === week)
-  }, "U", w))), /*#__PURE__*/React.createElement("h2", {
-    style: {
-      fontSize: 22,
-      margin: "4px 0 2px"
-    }
-  }, "Uke ", week), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "var(--dim)",
-      fontSize: 13,
-      margin: "0 0 16px"
-    }
-  }, "Logg det du gj\xF8r \u2013 det summeres gjennom uka"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 12
-    }
-  }, EXERCISES.map(ex => /*#__PURE__*/React.createElement(ExCard, {
-    key: ex.id,
-    ex: ex,
-    count: weekTotals[ex.id].count,
-    hitTotal: hits[`${week}_${ex.id}`] || 0,
-    busy: busy,
-    onLog: (c, h) => logExercise(ex.id, c, h)
-  }))), /*#__PURE__*/React.createElement(WeekEntries, {
-    entries: weekEntries,
-    busy: busy,
-    onDelete: deleteEntry
-  }), /*#__PURE__*/React.createElement(Season, {
-    entries: entries,
-    hits: hits
-  }), /*#__PURE__*/React.createElement(Toast, {
-    toast: toast
-  }));
+    }, void 0, false)]
+  }, void 0, true);
 }
 function ExCard({
   ex,
@@ -467,106 +490,127 @@ function ExCard({
     setH("");
     setOpen(false);
   }
-  return /*#__PURE__*/React.createElement("div", {
-    style: S.exCard(reachedN, reachedE)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 26
-    }
-  }, ex.icon), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 15
-    }
-  }, ex.name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "var(--dim)",
-      fontSize: 12.5
-    }
-  }, count, " ", ex.unit, reachedE ? " · Ekstra nådd! 🔥" : reachedN ? " · Normal nådd ✓" : "", hitPct !== null && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--gold)"
-    }
-  }, " \xB7 ", hitPct, "% treff"))), /*#__PURE__*/React.createElement("button", {
-    style: S.addBtn,
-    onClick: () => setOpen(o => !o)
-  }, open ? "✕" : "+ Logg")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: S.barBg
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...S.barFill,
-      width: `${pct}%`,
-      background: bar
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: S.marker(ex.normal / ex.ekstra * 100)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginTop: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--green)",
-      fontSize: 11
-    }
-  }, "Normal ", ex.normal), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--gold)",
-      fontSize: 11
-    }
-  }, "Ekstra ", ex.ekstra))), open && /*#__PURE__*/React.createElement("div", {
-    style: S.logBox
-  }, /*#__PURE__*/React.createElement("label", {
-    style: S.lbl
-  }, ex.logLabel), /*#__PURE__*/React.createElement("input", {
-    style: S.num,
-    type: "number",
-    inputMode: "numeric",
-    min: "1",
-    value: c,
-    onChange: e => setC(e.target.value),
-    autoFocus: true,
-    placeholder: "0"
-  }), ex.hits && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
-    style: S.lbl
-  }, "Hvor mange traff du? ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#4A5876"
-    }
-  }, "(kun synlig for deg)")), /*#__PURE__*/React.createElement("input", {
-    style: S.num,
-    type: "number",
-    inputMode: "numeric",
-    min: "0",
-    value: h,
-    onChange: e => setH(e.target.value),
-    placeholder: "0"
-  }), parseInt(h || 0, 10) > parseInt(c || 0, 10) && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--red)",
-      fontSize: 12
-    }
-  }, "Treff kan ikke v\xE6re flere enn skudd")), /*#__PURE__*/React.createElement("button", {
-    style: S.save(busy),
-    disabled: busy,
-    onClick: submit
-  }, busy ? "Lagrer…" : "Lagre")));
+  return /*#__PURE__*/_jsxDEV("div", {
+    style: S.exCard(reachedN, reachedE),
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 26
+        },
+        children: ex.icon
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          flex: 1
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 15
+          },
+          children: ex.name
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            color: "var(--dim)",
+            fontSize: 12.5
+          },
+          children: [count, " ", ex.unit, reachedE ? " · Ekstra nådd! 🔥" : reachedN ? " · Normal nådd ✓" : "", hitPct !== null && /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: "var(--gold)"
+            },
+            children: [" · ", hitPct, "% treff"]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+        style: S.addBtn,
+        onClick: () => setOpen(o => !o),
+        children: open ? "✕" : "+ Logg"
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        marginTop: 10
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: S.barBg,
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            ...S.barFill,
+            width: `${pct}%`,
+            background: bar
+          }
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: S.marker(ex.normal / ex.ekstra * 100)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: 4
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "var(--green)",
+            fontSize: 11
+          },
+          children: ["Normal ", ex.normal]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "var(--gold)",
+            fontSize: 11
+          },
+          children: ["Ekstra ", ex.ekstra]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), open && /*#__PURE__*/_jsxDEV("div", {
+      style: S.logBox,
+      children: [/*#__PURE__*/_jsxDEV("label", {
+        style: S.lbl,
+        children: ex.logLabel
+      }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+        style: S.num,
+        type: "number",
+        inputMode: "numeric",
+        min: "1",
+        value: c,
+        onChange: e => setC(e.target.value),
+        autoFocus: true,
+        placeholder: "0"
+      }, void 0, false), ex.hits && /*#__PURE__*/_jsxDEV(_Fragment, {
+        children: [/*#__PURE__*/_jsxDEV("label", {
+          style: S.lbl,
+          children: ["Hvor mange traff du? ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: "#4A5876"
+            },
+            children: "(kun synlig for deg)"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("input", {
+          style: S.num,
+          type: "number",
+          inputMode: "numeric",
+          min: "0",
+          value: h,
+          onChange: e => setH(e.target.value),
+          placeholder: "0"
+        }, void 0, false), parseInt(h || 0, 10) > parseInt(c || 0, 10) && /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "var(--red)",
+            fontSize: 12
+          },
+          children: "Treff kan ikke være flere enn skudd"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+        style: S.save(busy),
+        disabled: busy,
+        onClick: submit,
+        children: busy ? "Lagrer…" : "Lagre"
+      }, void 0, false)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 function WeekEntries({
   entries,
@@ -574,43 +618,49 @@ function WeekEntries({
   busy
 }) {
   if (!entries.length) return null;
-  // nyeste først
   const list = [...entries].reverse();
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       marginTop: 22
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: S.h3
-  }, "Dine loggf\xF8ringer denne uka"), /*#__PURE__*/React.createElement("div", {
-    style: S.card
-  }, list.map(e => {
-    const ex = exById(e.exercise);
-    return /*#__PURE__*/React.createElement("div", {
-      key: e.id,
-      style: S.entryRow
-    }, /*#__PURE__*/React.createElement("span", {
+    },
+    children: [/*#__PURE__*/_jsxDEV("h3", {
+      style: S.h3,
+      children: "Dine loggføringer denne uka"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: S.card,
+      children: list.map(e => {
+        const ex = exById(e.exercise);
+        return /*#__PURE__*/_jsxDEV("div", {
+          style: S.entryRow,
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontSize: 14
+            },
+            children: [ex.icon, " ", e.count, " ", ex.unit, " ", /*#__PURE__*/_jsxDEV("span", {
+              style: {
+                color: "var(--dim)"
+              },
+              children: ["· ", ex.name]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+            style: S.del,
+            disabled: busy,
+            onClick: () => onDelete(e),
+            title: "Slett",
+            children: "🗑️"
+          }, void 0, false)]
+        }, e.id, true);
+      })
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
       style: {
-        fontSize: 14
-      }
-    }, ex.icon, " ", e.count, " ", ex.unit, " ", /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--dim)"
-      }
-    }, "\xB7 ", ex.name)), /*#__PURE__*/React.createElement("button", {
-      style: S.del,
-      disabled: busy,
-      onClick: () => onDelete(e),
-      title: "Slett"
-    }, "\uD83D\uDDD1\uFE0F"));
-  })), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#4A5876",
-      fontSize: 11.5,
-      marginTop: 8,
-      lineHeight: 1.5
-    }
-  }, "Logget du feil? Slett loggf\xF8ringen og legg den inn p\xE5 nytt."));
+        color: "#4A5876",
+        fontSize: 11.5,
+        marginTop: 8,
+        lineHeight: 1.5
+      },
+      children: "Logget du feil? Slett loggføringen og legg den inn på nytt."
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Season({
   entries,
@@ -633,70 +683,82 @@ function Season({
       hitSum
     };
   }), [entries, hits]);
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       marginTop: 26
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: S.h3
-  }, "Hele sommeren"), /*#__PURE__*/React.createElement("div", {
-    style: S.card
-  }, totals.map(({
-    ex,
-    count,
-    hitSum
-  }) => /*#__PURE__*/React.createElement("div", {
-    key: ex.id,
-    style: S.sumRow
-  }, /*#__PURE__*/React.createElement("span", null, ex.icon, " ", ex.name), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--dim)"
-    }
-  }, count, " ", ex.unit, ex.hits && count > 0 && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--gold)"
-    }
-  }, " \xB7 ", Math.round(hitSum / count * 100), "%"))))), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#4A5876",
-      fontSize: 11.5,
-      textAlign: "center",
-      marginTop: 14,
-      lineHeight: 1.5
-    }
-  }, "Treffprosenten din lagres kun p\xE5 denne enheten og er privat.", /*#__PURE__*/React.createElement("br", null), "Bytter du telefon, nullstilles den."));
+    },
+    children: [/*#__PURE__*/_jsxDEV("h3", {
+      style: S.h3,
+      children: "Hele sommeren"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: S.card,
+      children: totals.map(({
+        ex,
+        count,
+        hitSum
+      }) => /*#__PURE__*/_jsxDEV("div", {
+        style: S.sumRow,
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: [ex.icon, " ", ex.name]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "var(--dim)"
+          },
+          children: [count, " ", ex.unit, ex.hits && count > 0 && /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: "var(--gold)"
+            },
+            children: [" · ", Math.round(hitSum / count * 100), "%"]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, ex.id, true))
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "#4A5876",
+        fontSize: 11.5,
+        textAlign: "center",
+        marginTop: 14,
+        lineHeight: 1.5
+      },
+      children: ["Treffprosenten din lagres kun på denne enheten og er privat.", /*#__PURE__*/_jsxDEV("br", {}, void 0, false), "Bytter du telefon, nullstilles den."]
+    }, void 0, true)]
+  }, void 0, true);
 }
 function Header() {
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       textAlign: "center",
       paddingTop: 38
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 46
-    }
-  }, "\uD83C\uDFC0"), /*#__PURE__*/React.createElement("h1", {
-    style: {
-      ...S.h1,
-      fontFamily: "'Archivo Black',sans-serif",
-      letterSpacing: -0.5
-    }
-  }, "SOMMERTRENING"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "var(--accent)",
-      fontWeight: 700,
-      fontSize: 14,
-      letterSpacing: 2,
-      marginTop: -2
-    }
-  }, "ASKER ALIENS \xB7 2026"));
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        fontSize: 46
+      },
+      children: "🏀"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("h1", {
+      style: {
+        ...S.h1,
+        fontFamily: "'Archivo Black',sans-serif",
+        letterSpacing: -0.5
+      },
+      children: "SOMMERTRENING"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "var(--accent)",
+        fontWeight: 700,
+        fontSize: 14,
+        letterSpacing: 2,
+        marginTop: -2
+      },
+      children: "ASKER ALIENS · 2026"
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Splash({
   text,
   spin
 }) {
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -705,36 +767,39 @@ function Splash({
       minHeight: "100dvh",
       textAlign: "center",
       padding: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 46,
-      marginBottom: 16
-    }
-  }, "\uD83C\uDFC0"), spin && /*#__PURE__*/React.createElement("div", {
-    className: "spin",
-    style: {
-      width: 26,
-      height: 26,
-      border: "3px solid var(--line)",
-      borderTopColor: "var(--accent)",
-      borderRadius: "50%",
-      marginBottom: 16
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "var(--dim)",
-      maxWidth: 300,
-      lineHeight: 1.5
-    }
-  }, text));
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        fontSize: 46,
+        marginBottom: 16
+      },
+      children: "🏀"
+    }, void 0, false), spin && /*#__PURE__*/_jsxDEV("div", {
+      className: "spin",
+      style: {
+        width: 26,
+        height: 26,
+        border: "3px solid var(--line)",
+        borderTopColor: "var(--accent)",
+        borderRadius: "50%",
+        marginBottom: 16
+      }
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "var(--dim)",
+        maxWidth: 300,
+        lineHeight: 1.5
+      },
+      children: text
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Toast({
   toast
 }) {
   if (!toast) return null;
   const bg = toast.type === "warn" ? "var(--gold)" : toast.type === "err" ? "var(--red)" : "var(--green)";
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       position: "fixed",
       bottom: "calc(24px + env(safe-area-inset-bottom))",
@@ -750,8 +815,9 @@ function Toast({
       zIndex: 100,
       maxWidth: "90%",
       animation: "slideUp .25s ease"
-    }
-  }, toast.msg);
+    },
+    children: toast.msg
+  }, void 0, false);
 }
 const S = {
   h1: {
@@ -953,7 +1019,7 @@ const S = {
     borderBottom: "1px solid rgba(38,51,77,.34)"
   }
 };
-ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/_jsxDEV(App, {}, void 0, false));
 </script>
 </body>
 </html>
