@@ -10,29 +10,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  :root{
-    --bg:#0B1220; --panel:#131C2E; --panel2:#1B2740; --line:#26334D;
-    --text:#EAF0FB; --dim:#8A99B5; --green:#34D399; --gold:#FBBF24;
-    --blue:#5B8DEF; --red:#F87171; --accent:#FF6B35;
-  }
+  :root{ --bg:#0B1220; --panel:#131C2E; --panel2:#1B2740; --line:#26334D; --text:#EAF0FB; --dim:#8A99B5; --green:#34D399; --gold:#FBBF24; --blue:#5B8DEF; --red:#F87171; --accent:#FF6B35; }
   html,body{ background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; }
   body{ min-height:100vh; min-height:100dvh; }
-  #root{ max-width:600px; margin:0 auto; padding:0 16px calc(60px + env(safe-area-inset-bottom)); }
+  #root{ max-width:600px; margin:0 auto; padding:0 16px calc(80px + env(safe-area-inset-bottom)); }
   input::placeholder{ color:#4A5876; }
   button{ font-family:inherit; cursor:pointer; }
   @keyframes pop{ 0%{transform:scale(.96);opacity:0} 100%{transform:scale(1);opacity:1} }
   @keyframes slideUp{ 0%{transform:translateY(8px);opacity:0} 100%{transform:translateY(0);opacity:1} }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .spin{ animation:spin .8s linear infinite; }
+  #fallback{ display:none; padding:40px 24px; text-align:center; color:var(--dim); }
   @media (prefers-reduced-motion: reduce){ *{ animation:none!important; transition:none!important; } }
 </style>
 </head>
 <body>
 <div id="root"></div>
+<div id="fallback"><div style="font-size:40px;margin-bottom:12px">🏀</div><p style="max-width:300px;margin:0 auto;line-height:1.5">Appen klarte ikke å laste. Sjekk at du har nett, og last siden på nytt.</p></div>
+<script>setTimeout(function(){ if(!window.React){ document.getElementById("fallback").style.display="block"; } }, 8000);</script>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
+import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
 const {
   useState,
   useEffect,
@@ -84,10 +84,16 @@ const EXERCISES = [{
   unit: "skudd",
   normal: 60,
   ekstra: 150
+}, {
+  id: "diverse",
+  icon: "🏀",
+  name: "Diverse skudd/layup",
+  unit: "skudd",
+  normal: 80,
+  ekstra: 200
 }];
-const exById = id => EXERCISES.find(e => e.id === id);
 function App() {
-  const [session, setSession] = useState(undefined); // undefined=laster, null=ikke innlogget
+  const [session, setSession] = useState(undefined);
   useEffect(() => {
     sb.auth.getSession().then(({
       data
@@ -97,14 +103,14 @@ function App() {
     } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
   }, []);
-  if (session === undefined) return /*#__PURE__*/React.createElement(Splash, {
+  if (session === undefined) return /*#__PURE__*/_jsxDEV(Splash, {
     spin: true,
-    text: "Laster\u2026"
-  });
-  if (!session) return /*#__PURE__*/React.createElement(Login, null);
-  return /*#__PURE__*/React.createElement(Dashboard, {
+    text: "Laster…"
+  }, void 0, false);
+  if (!session) return /*#__PURE__*/_jsxDEV(Login, {}, void 0, false);
+  return /*#__PURE__*/_jsxDEV(Dashboard, {
     session: session
-  });
+  }, void 0, false);
 }
 function Login() {
   const [email, setEmail] = useState("");
@@ -123,76 +129,87 @@ function Login() {
     setBusy(false);
     if (error) setErr("Feil e-post eller passord.");
   }
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       maxWidth: 380,
       margin: "0 auto",
       paddingTop: 60,
       animation: "pop .3s ease"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 42
-    }
-  }, "\uD83C\uDFC0"), /*#__PURE__*/React.createElement("h1", {
-    style: {
-      ...S.h1,
-      fontFamily: "'Archivo Black',sans-serif"
-    }
-  }, "TRENEROVERSIKT"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "var(--accent)",
-      fontWeight: 700,
-      fontSize: 13,
-      letterSpacing: 2
-    }
-  }, "ASKER ALIENS \xB7 2026")), /*#__PURE__*/React.createElement("div", {
-    style: S.card
-  }, /*#__PURE__*/React.createElement("label", {
-    style: S.lbl
-  }, "E-post"), /*#__PURE__*/React.createElement("input", {
-    style: S.input,
-    type: "email",
-    value: email,
-    onChange: e => setEmail(e.target.value),
-    placeholder: "trener@eksempel.no",
-    autoFocus: true
-  }), /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...S.lbl,
-      marginTop: 12
-    }
-  }, "Passord"), /*#__PURE__*/React.createElement("input", {
-    style: S.input,
-    type: "password",
-    value: pw,
-    onChange: e => setPw(e.target.value),
-    onKeyDown: e => e.key === "Enter" && signIn(),
-    placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
-  }), err && /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "var(--red)",
-      fontSize: 13,
-      marginTop: 10
-    }
-  }, err), /*#__PURE__*/React.createElement("button", {
-    style: S.cta(busy),
-    disabled: busy,
-    onClick: signIn
-  }, busy ? "Logger inn…" : "Logg inn")), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#4A5876",
-      fontSize: 12,
-      textAlign: "center",
-      marginTop: 16,
-      lineHeight: 1.5
-    }
-  }, "Kun for trenere. Spillere bruker hovedlenken."));
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        textAlign: "center",
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 42
+        },
+        children: "🏀"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("h1", {
+        style: {
+          ...S.h1,
+          fontFamily: "'Archivo Black',sans-serif"
+        },
+        children: "TRENEROVERSIKT"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+        style: {
+          color: "var(--accent)",
+          fontWeight: 700,
+          fontSize: 13,
+          letterSpacing: 2
+        },
+        children: "ASKER ALIENS · 2026"
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: S.card,
+      children: [/*#__PURE__*/_jsxDEV("label", {
+        style: S.lbl,
+        children: "E-post"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+        style: S.input,
+        type: "email",
+        value: email,
+        onChange: e => setEmail(e.target.value),
+        placeholder: "trener@eksempel.no",
+        autoFocus: true
+      }, void 0, false), /*#__PURE__*/_jsxDEV("label", {
+        style: {
+          ...S.lbl,
+          marginTop: 12
+        },
+        children: "Passord"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+        style: S.input,
+        type: "password",
+        value: pw,
+        onChange: e => setPw(e.target.value),
+        onKeyDown: e => e.key === "Enter" && signIn(),
+        placeholder: "••••••••"
+      }, void 0, false), err && /*#__PURE__*/_jsxDEV("p", {
+        style: {
+          color: "var(--red)",
+          fontSize: 13,
+          marginTop: 10
+        },
+        children: err
+      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+        style: S.cta(busy),
+        disabled: busy,
+        onClick: signIn,
+        children: busy ? "Logger inn…" : "Logg inn"
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "#4A5876",
+        fontSize: 12,
+        textAlign: "center",
+        marginTop: 16,
+        lineHeight: 1.5
+      },
+      children: "Kun for trenere. Spillere bruker hovedlenken."
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Dashboard({
   session
@@ -201,7 +218,7 @@ function Dashboard({
   const [teamName, setTeamName] = useState("");
   const [players, setPlayers] = useState([]);
   const [entries, setEntries] = useState([]);
-  const [tab, setTab] = useState("samlet"); // samlet | spillere
+  const [tab, setTab] = useState("samlet");
   const [toast, setToast] = useState(null);
   const [noCoach, setNoCoach] = useState(false);
   function flash(msg, type = "ok") {
@@ -216,7 +233,6 @@ function Dashboard({
   }, []);
   async function load() {
     setLoading(true);
-    // finn lagets navn via coaches
     const {
       data: coach
     } = await sb.from("coaches").select("team_id, teams(name)").maybeSingle();
@@ -239,8 +255,6 @@ function Dashboard({
   async function signOut() {
     await sb.auth.signOut();
   }
-
-  // statistikk
   const enrolled = players.filter(p => p.enrolled && p.active !== false);
   const teamTotals = useMemo(() => {
     const t = {};
@@ -268,55 +282,64 @@ function Dashboard({
       };
     });
   }, [players, entries]);
-  if (loading) return /*#__PURE__*/React.createElement(Splash, {
+  if (loading) return /*#__PURE__*/_jsxDEV(Splash, {
     spin: true,
-    text: "Henter lagets data\u2026"
-  });
-  if (noCoach) return /*#__PURE__*/React.createElement(Splash, {
-    text: "Brukeren din er ikke koblet til et lag enn\xE5. Fullf\xF8r trener-oppsettet (se guide), s\xE5 er du i gang."
-  });
-  return /*#__PURE__*/React.createElement("div", {
+    text: "Henter lagets data…"
+  }, void 0, false);
+  if (noCoach) return /*#__PURE__*/_jsxDEV(Splash, {
+    text: "Brukeren din er ikke koblet til et lag ennå. Fullfør trener-oppsettet (se guide), så er du i gang."
+  }, void 0, false);
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       maxWidth: 560,
       margin: "0 auto",
       animation: "pop .3s ease"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: S.topbar
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 800,
-      fontSize: 18
-    }
-  }, teamName), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "var(--dim)",
-      fontSize: 12
-    }
-  }, enrolled.length, " p\xE5meldt")), /*#__PURE__*/React.createElement("button", {
-    style: S.signout,
-    onClick: signOut
-  }, "Logg ut")), /*#__PURE__*/React.createElement("div", {
-    style: S.tabs
-  }, /*#__PURE__*/React.createElement("button", {
-    style: S.tab(tab === "samlet"),
-    onClick: () => setTab("samlet")
-  }, "Samlet"), /*#__PURE__*/React.createElement("button", {
-    style: S.tab(tab === "spillere"),
-    onClick: () => setTab("spillere")
-  }, "Spillere")), tab === "samlet" ? /*#__PURE__*/React.createElement(TeamView, {
-    totals: teamTotals,
-    enrolled: enrolled,
-    perPlayer: perPlayer
-  }) : /*#__PURE__*/React.createElement(PlayersView, {
-    players: perPlayer,
-    allPlayers: players,
-    teamId: players[0]?.team_id,
-    onChange: load,
-    flash: flash
-  }), /*#__PURE__*/React.createElement(Toast, {
-    toast: toast
-  }));
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: S.topbar,
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 800,
+            fontSize: 18
+          },
+          children: teamName
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            color: "var(--dim)",
+            fontSize: 12
+          },
+          children: [enrolled.length, " påmeldt"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+        style: S.signout,
+        onClick: signOut,
+        children: "Logg ut"
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: S.tabs,
+      children: [/*#__PURE__*/_jsxDEV("button", {
+        style: S.tab(tab === "samlet"),
+        onClick: () => setTab("samlet"),
+        children: "Samlet"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+        style: S.tab(tab === "spillere"),
+        onClick: () => setTab("spillere"),
+        children: "Spillere"
+      }, void 0, false)]
+    }, void 0, true), tab === "samlet" ? /*#__PURE__*/_jsxDEV(TeamView, {
+      totals: teamTotals,
+      enrolled: enrolled,
+      perPlayer: perPlayer
+    }, void 0, false) : /*#__PURE__*/_jsxDEV(PlayersView, {
+      players: perPlayer,
+      teamId: players[0]?.team_id,
+      onChange: load,
+      flash: flash
+    }, void 0, false), /*#__PURE__*/_jsxDEV(Toast, {
+      toast: toast
+    }, void 0, false)]
+  }, void 0, true);
 }
 function TeamView({
   totals,
@@ -324,62 +347,74 @@ function TeamView({
   perPlayer
 }) {
   const activeCount = perPlayer.filter(p => p.active).length;
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: S.statGrid
-  }, /*#__PURE__*/React.createElement(Stat, {
-    label: "P\xE5meldt",
-    value: enrolled.length
-  }), /*#__PURE__*/React.createElement(Stat, {
-    label: "I gang",
-    value: activeCount
-  })), /*#__PURE__*/React.createElement("h3", {
-    style: S.h3
-  }, "Laget har gjort til sammen"), /*#__PURE__*/React.createElement("div", {
-    style: S.card
-  }, EXERCISES.map(ex => /*#__PURE__*/React.createElement("div", {
-    key: ex.id,
-    style: S.sumRow
-  }, /*#__PURE__*/React.createElement("span", null, ex.icon, " ", ex.name), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 700
-    }
-  }, totals[ex.id].toLocaleString("no"), " ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--dim)",
-      fontWeight: 400,
-      fontSize: 13
-    }
-  }, ex.unit))))), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#4A5876",
-      fontSize: 11.5,
-      textAlign: "center",
-      marginTop: 14,
-      lineHeight: 1.5
-    }
-  }, "Tallene er summen av alt p\xE5meldte spillere har logget. Treffprosent er privat og vises ikke her."));
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: S.statGrid,
+      children: [/*#__PURE__*/_jsxDEV(Stat, {
+        label: "Påmeldt",
+        value: enrolled.length
+      }, void 0, false), /*#__PURE__*/_jsxDEV(Stat, {
+        label: "I gang",
+        value: activeCount
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("h3", {
+      style: S.h3,
+      children: "Laget har gjort til sammen"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: S.card,
+      children: EXERCISES.map(ex => /*#__PURE__*/_jsxDEV("div", {
+        style: S.sumRow,
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: [ex.icon, " ", ex.name]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontWeight: 700
+          },
+          children: [totals[ex.id].toLocaleString("no"), " ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: "var(--dim)",
+              fontWeight: 400,
+              fontSize: 13
+            },
+            children: ex.unit
+          }, void 0, false)]
+        }, void 0, true)]
+      }, ex.id, true))
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "#4A5876",
+        fontSize: 11.5,
+        textAlign: "center",
+        marginTop: 14,
+        lineHeight: 1.5
+      },
+      children: "Tallene er summen av alt påmeldte spillere har logget. Treffprosent er privat og vises ikke her."
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Stat({
   label,
   value
 }) {
-  return /*#__PURE__*/React.createElement("div", {
-    style: S.stat
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 26,
-      fontWeight: 800
-    }
-  }, value), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "var(--dim)",
-      fontSize: 12
-    }
-  }, label));
+  return /*#__PURE__*/_jsxDEV("div", {
+    style: S.stat,
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        fontSize: 26,
+        fontWeight: 800
+      },
+      children: value
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        color: "var(--dim)",
+        fontSize: 12
+      },
+      children: label
+    }, void 0, false)]
+  }, void 0, true);
 }
 function PlayersView({
   players,
-  allPlayers,
   teamId,
   onChange,
   flash
@@ -425,41 +460,47 @@ function PlayersView({
     if (a.active !== b.active) return a.active ? -1 : 1;
     return a.full_name.localeCompare(b.full_name, "no");
   });
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
-    style: S.addRow,
-    onClick: () => setAdding(a => !a)
-  }, adding ? "✕ Avbryt" : "+ Legg til spiller"), adding && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...S.card,
-      marginTop: 10
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: S.lbl
-  }, "Spillerens fulle navn"), /*#__PURE__*/React.createElement("input", {
-    style: S.input,
-    value: newName,
-    onChange: e => setNewName(e.target.value),
-    placeholder: "Fornavn Etternavn",
-    autoFocus: true,
-    onKeyDown: e => e.key === "Enter" && addPlayer()
-  }), /*#__PURE__*/React.createElement("button", {
-    style: S.cta(busy),
-    disabled: busy,
-    onClick: addPlayer
-  }, busy ? "Legger til…" : "Legg til")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10,
-      marginTop: 14
-    }
-  }, sorted.map(p => /*#__PURE__*/React.createElement(PlayerCard, {
-    key: p.id,
-    p: p,
-    onHide: () => toggleActive(p, false),
-    onShow: () => toggleActive(p, true),
-    busy: busy
-  }))));
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("button", {
+      style: S.addRow,
+      onClick: () => setAdding(a => !a),
+      children: adding ? "✕ Avbryt" : "+ Legg til spiller"
+    }, void 0, false), adding && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        ...S.card,
+        marginTop: 10
+      },
+      children: [/*#__PURE__*/_jsxDEV("label", {
+        style: S.lbl,
+        children: "Spillerens fulle navn"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+        style: S.input,
+        value: newName,
+        onChange: e => setNewName(e.target.value),
+        placeholder: "Fornavn Etternavn",
+        autoFocus: true,
+        onKeyDown: e => e.key === "Enter" && addPlayer()
+      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+        style: S.cta(busy),
+        disabled: busy,
+        onClick: addPlayer,
+        children: busy ? "Legger til…" : "Legg til"
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        marginTop: 14
+      },
+      children: sorted.map(p => /*#__PURE__*/_jsxDEV(PlayerCard, {
+        p: p,
+        onHide: () => toggleActive(p, false),
+        onShow: () => toggleActive(p, true),
+        busy: busy
+      }, p.id, false))
+    }, void 0, false)]
+  }, void 0, true);
 }
 function PlayerCard({
   p,
@@ -470,67 +511,79 @@ function PlayerCard({
   const [open, setOpen] = useState(false);
   const status = !p.enrolled ? "ikke påmeldt" : p.active ? "i gang" : "ingen aktivitet";
   const statusColor = !p.enrolled ? "var(--dim)" : p.active ? "var(--green)" : "var(--gold)";
-  return /*#__PURE__*/React.createElement("div", {
-    style: S.pCard
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 15
-    }
-  }, p.full_name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: statusColor
-    }
-  }, status)), p.enrolled && /*#__PURE__*/React.createElement("button", {
-    style: S.miniBtn,
-    onClick: () => setOpen(o => !o)
-  }, open ? "Skjul" : "Se tall")), open && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 10,
-      paddingTop: 10,
-      borderTop: "1px solid var(--line)"
-    }
-  }, EXERCISES.map(ex => /*#__PURE__*/React.createElement("div", {
-    key: ex.id,
-    style: S.miniRow
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--dim)"
-    }
-  }, ex.icon, " ", ex.name), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 600
-    }
-  }, p.totals[ex.id], " ", ex.unit)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 8
-    }
-  }, p.active !== false ? /*#__PURE__*/React.createElement("button", {
-    style: S.hideBtn,
-    disabled: busy,
-    onClick: onHide
-  }, "Skjul spiller") : /*#__PURE__*/React.createElement("button", {
-    style: S.showBtn,
-    disabled: busy,
-    onClick: onShow
-  }, "Vis igjen")));
+  return /*#__PURE__*/_jsxDEV("div", {
+    style: S.pCard,
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          flex: 1
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 15
+          },
+          children: p.full_name
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: statusColor
+          },
+          children: status
+        }, void 0, false)]
+      }, void 0, true), p.enrolled && /*#__PURE__*/_jsxDEV("button", {
+        style: S.miniBtn,
+        onClick: () => setOpen(o => !o),
+        children: open ? "Skjul" : "Se tall"
+      }, void 0, false)]
+    }, void 0, true), open && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        marginTop: 10,
+        paddingTop: 10,
+        borderTop: "1px solid var(--line)"
+      },
+      children: EXERCISES.map(ex => /*#__PURE__*/_jsxDEV("div", {
+        style: S.miniRow,
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "var(--dim)"
+          },
+          children: [ex.icon, " ", ex.name]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontWeight: 600
+          },
+          children: [p.totals[ex.id], " ", ex.unit]
+        }, void 0, true)]
+      }, ex.id, true))
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        marginTop: 8
+      },
+      children: p.active !== false ? /*#__PURE__*/_jsxDEV("button", {
+        style: S.hideBtn,
+        disabled: busy,
+        onClick: onHide,
+        children: "Skjul spiller"
+      }, void 0, false) : /*#__PURE__*/_jsxDEV("button", {
+        style: S.showBtn,
+        disabled: busy,
+        onClick: onShow,
+        children: "Vis igjen"
+      }, void 0, false)
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Splash({
   text,
   spin
 }) {
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -539,36 +592,39 @@ function Splash({
       minHeight: "100dvh",
       textAlign: "center",
       padding: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 46,
-      marginBottom: 16
-    }
-  }, "\uD83C\uDFC0"), spin && /*#__PURE__*/React.createElement("div", {
-    className: "spin",
-    style: {
-      width: 26,
-      height: 26,
-      border: "3px solid var(--line)",
-      borderTopColor: "var(--accent)",
-      borderRadius: "50%",
-      marginBottom: 16
-    }
-  }), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "var(--dim)",
-      maxWidth: 320,
-      lineHeight: 1.5
-    }
-  }, text));
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        fontSize: 46,
+        marginBottom: 16
+      },
+      children: "🏀"
+    }, void 0, false), spin && /*#__PURE__*/_jsxDEV("div", {
+      className: "spin",
+      style: {
+        width: 26,
+        height: 26,
+        border: "3px solid var(--line)",
+        borderTopColor: "var(--accent)",
+        borderRadius: "50%",
+        marginBottom: 16
+      }
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        color: "var(--dim)",
+        maxWidth: 320,
+        lineHeight: 1.5
+      },
+      children: text
+    }, void 0, false)]
+  }, void 0, true);
 }
 function Toast({
   toast
 }) {
   if (!toast) return null;
   const bg = toast.type === "warn" ? "var(--gold)" : toast.type === "err" ? "var(--red)" : "var(--green)";
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       position: "fixed",
       bottom: "calc(24px + env(safe-area-inset-bottom))",
@@ -584,8 +640,9 @@ function Toast({
       zIndex: 100,
       maxWidth: "90%",
       animation: "slideUp .25s ease"
-    }
-  }, toast.msg);
+    },
+    children: toast.msg
+  }, void 0, false);
 }
 const S = {
   h1: {
@@ -737,7 +794,7 @@ const S = {
     width: "100%"
   }
 };
-ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/_jsxDEV(App, {}, void 0, false));
 </script>
 </body>
 </html>
