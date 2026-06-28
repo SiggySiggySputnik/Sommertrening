@@ -41,6 +41,30 @@ const SUPABASE_URL = "https://twcccgddjsuadzylexqi.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yaPwH31F0P6AJMcF_18lgQ_eykdot5C";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const WEEKS = 8;
+
+// Beregn hvilken uke programmet er i, basert på norsk tid.
+// Uke 1 startet mandag 22. juni 2026 kl 00:00 norsk tid.
+// Hver uke skifter ved midnatt natt til mandag. Gulv = uke 1, tak = uke 8.
+function currentWeek() {
+  try {
+    // Finn "nå" uttrykt i norsk tid (Europe/Oslo), uavhengig av enhetens tidssone
+    const nowOslo = new Date(new Date().toLocaleString("en-US", {
+      timeZone: "Europe/Oslo"
+    }));
+    // Uke 1, dag 1: 22. juni 2026, 00:00 norsk tid
+    const start = new Date(new Date("2026-06-22T00:00:00").toLocaleString("en-US", {
+      timeZone: "Europe/Oslo"
+    }));
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const diff = nowOslo.getTime() - start.getTime();
+    let wk = Math.floor(diff / msPerWeek) + 1;
+    if (wk < 1) wk = 1;
+    if (wk > WEEKS) wk = WEEKS;
+    return wk;
+  } catch {
+    return 1; // hvis noe feiler, fall tilbake til uke 1
+  }
+}
 const EXERCISES = [{
   id: "lop",
   icon: "🏃",
@@ -126,7 +150,7 @@ function App() {
   const [player, setPlayer] = useState(null);
   const [entries, setEntries] = useState([]);
   const [hits, setHits] = useState({});
-  const [week, setWeek] = useState(1);
+  const [week, setWeek] = useState(currentWeek());
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
   const [busy, setBusy] = useState(false);
