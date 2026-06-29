@@ -307,7 +307,7 @@ function Dashboard({
     style: S.tab(tab === "spillere"),
     onClick: () => setTab("spillere")
   }, "Spillere")), tab === "samlet" ? /*#__PURE__*/React.createElement(TeamView, {
-    totals: teamTotals,
+    entries: entries,
     enrolled: enrolled,
     perPlayer: perPlayer
   }) : /*#__PURE__*/React.createElement(PlayersView, {
@@ -320,11 +320,22 @@ function Dashboard({
   }));
 }
 function TeamView({
-  totals,
+  entries,
   enrolled,
   perPlayer
 }) {
   const activeCount = perPlayer.filter(p => p.active).length;
+  // null = hele sommeren, ellers tall 1-8
+  const [weekFilter, setWeekFilter] = useState(null);
+  const totals = useMemo(() => {
+    const t = {};
+    EXERCISES.forEach(e => t[e.id] = 0);
+    entries.forEach(e => {
+      if (weekFilter !== null && e.week !== weekFilter) return;
+      if (t[e.exercise] !== undefined) t[e.exercise] += e.count;
+    });
+    return t;
+  }, [entries, weekFilter]);
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: S.statGrid
   }, /*#__PURE__*/React.createElement(Stat, {
@@ -333,9 +344,20 @@ function TeamView({
   }), /*#__PURE__*/React.createElement(Stat, {
     label: "I gang",
     value: activeCount
-  })), /*#__PURE__*/React.createElement("h3", {
+  })), /*#__PURE__*/React.createElement("div", {
+    style: S.weekRow
+  }, /*#__PURE__*/React.createElement("button", {
+    style: S.weekBtn(weekFilter === null),
+    onClick: () => setWeekFilter(null)
+  }, "Alle"), Array.from({
+    length: WEEKS
+  }, (_, i) => i + 1).map(w => /*#__PURE__*/React.createElement("button", {
+    key: w,
+    style: S.weekBtn(weekFilter === w),
+    onClick: () => setWeekFilter(w)
+  }, "U", w))), /*#__PURE__*/React.createElement("h3", {
     style: S.h3
-  }, "Laget har gjort til sammen"), /*#__PURE__*/React.createElement("div", {
+  }, weekFilter === null ? "Laget har gjort til sammen" : `Laget i uke ${weekFilter}`), /*#__PURE__*/React.createElement("div", {
     style: S.card
   }, EXERCISES.map(ex => /*#__PURE__*/React.createElement("div", {
     key: ex.id,
@@ -358,7 +380,7 @@ function TeamView({
       marginTop: 14,
       lineHeight: 1.5
     }
-  }, "Tallene er summen av alt påmeldte spillere har logget. Treffprosent er privat og vises ikke her."));
+  }, weekFilter === null ? "Tallene er summen av alt påmeldte spillere har logget. Treffprosent er privat og vises ikke her." : "Tallene viser hva laget logget denne uka. Treffprosent er privat og vises ikke her."));
 }
 function Stat({
   label,
@@ -656,6 +678,23 @@ const S = {
     gap: 8,
     marginBottom: 18
   },
+  weekRow: {
+    display: "flex",
+    gap: 6,
+    flexWrap: "wrap",
+    margin: "16px 0 4px"
+  },
+  weekBtn: a => ({
+    flex: "1 1 auto",
+    minWidth: 38,
+    background: a ? "var(--accent)" : "var(--panel)",
+    border: `1px solid ${a ? "var(--accent)" : "var(--line)"}`,
+    borderRadius: 9,
+    color: a ? "#fff" : "var(--dim)",
+    fontWeight: a ? 800 : 500,
+    fontSize: 13,
+    padding: "8px 0"
+  }),
   tab: a => ({
     flex: 1,
     background: a ? "var(--accent)" : "var(--panel)",
